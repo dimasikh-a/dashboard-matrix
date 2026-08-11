@@ -22,54 +22,6 @@ const DEFAULT_COLUMNS = [
 ];
 
 const SAMPLE_ROWS: MatrixRow[] = [
-  {
-    id: "1",
-    Nama: "Iis Rosmawati",
-    "Jenis Kegiatan": "Perbup tentang Target Pajak Daerah dan Retribusi Daerah Awal",
-    Kasubid: "-",
-    Kabid: "-",
-    "Kasubid/Kabid Bidang lain": "-",
-    Sekban: "-",
-    Kaban: "-",
-    "Keterangan Tambahan": "27 Februari 2026, diajukan ke TU Setda untuk ditandatangani Setda",
-    Status: "Selesai",
-    "Tanggal Selesai": "4 Maret 2026",
-    "Perda/Perbup/Kepbup/Perkaban/KepKaban dll": "Peraturan Bupati Bogor Nomor 3 Tahun 2026 Tanggal 5 Januari 2026 tentang Target Penerimaan Pajak Daerah dan Retribusi Daerah Per Triwulan Tahun Anggaran 2026",
-    Catatan: "Perbup selesai difinalisasi tanggal 4 Maret 2026, dan telah diundangkan tanggal 5 Januari 2026",
-    LINK: "https://drive.google.com/",
-  },
-  {
-    id: "2",
-    Nama: "Tim Pengembangan",
-    "Jenis Kegiatan": "Penyusunan rencana kerja pengembangan",
-    Kasubid: "Dalam proses",
-    Kabid: "Dalam proses",
-    "Kasubid/Kabid Bidang lain": "-",
-    Sekban: "-",
-    Kaban: "-",
-    "Keterangan Tambahan": "Dokumen sedang dalam tahap reviu internal",
-    Status: "Berjalan",
-    "Tanggal Selesai": "April 2026",
-    "Perda/Perbup/Kepbup/Perkaban/KepKaban dll": "-",
-    Catatan: "Menunggu hasil reviu",
-    LINK: "",
-  },
-  {
-    id: "3",
-    Nama: "Koordinator Monitoring",
-    "Jenis Kegiatan": "Monitoring pelaksanaan program pengembangan",
-    Kasubid: "-",
-    Kabid: "-",
-    "Kasubid/Kabid Bidang lain": "-",
-    Sekban: "-",
-    Kaban: "-",
-    "Keterangan Tambahan": "Menunggu jadwal kunjungan lapangan final",
-    Status: "Direncanakan",
-    "Tanggal Selesai": "Juni 2026",
-    "Perda/Perbup/Kepbup/Perkaban/KepKaban dll": "-",
-    Catatan: "-",
-    LINK: "",
-  },
 ];
 
 const STATUS_OPTIONS = ["Direncanakan", "Berjalan", "Selesai", "Tertunda"];
@@ -256,7 +208,6 @@ export default function DashboardPage() {
             <div><h2>Data kegiatan</h2><p>{filteredRows.length} dari {rows.length} data ditampilkan</p></div>
             <div className="actions">
               <input ref={fileInput} className="sr-only" type="file" accept=".xlsx,.xls" onChange={handleImport} />
-              <button className="secondary" onClick={() => fileInput.current?.click()}>⇧ Impor Excel</button>
               <button className="secondary" onClick={exportExcel}>⇩ Ekspor</button>
             </div>
           </div>
@@ -273,7 +224,6 @@ export default function DashboardPage() {
               <option value="asc">Nama: A–Z</option>
               <option value="desc">Nama: Z–A</option>
             </select>
-            <button className="text-button" onClick={resetData}>Pulihkan contoh</button>
           </div>
 
           <div className="table-scroll">
