@@ -9,6 +9,7 @@ const DEFAULT_COLUMNS = [
   "Nama",
   "Jenis Kegiatan",
   "Sub Kegiatan",
+  "Status Kegiatan",
   "Kasubid",
   "Kabid",
   "Kasubid/Kabid Bidang lain",
@@ -20,60 +21,6 @@ const DEFAULT_COLUMNS = [
   "Perda/Perbup/Kepbup/Perkaban/KepKaban dll",
   "Catatan",
   "LINK",
-];
-
-const SAMPLE_ROWS: MatrixRow[] = [
-  {
-    id: "1",
-    Nama: "Iis Rosmawati",
-    "Jenis Kegiatan": "Perbup tentang Target Pajak Daerah dan Retribusi Daerah Awal",
-    "Sub Kegiatan": "-",
-    Kasubid: "-",
-    Kabid: "-",
-    "Kasubid/Kabid Bidang lain": "-",
-    Sekban: "-",
-    Kaban: "-",
-    "Keterangan Tambahan": "27 Februari 2026, diajukan ke TU Setda untuk ditandatangani Setda",
-    Status: "Selesai",
-    "Tanggal Selesai": "4 Maret 2026",
-    "Perda/Perbup/Kepbup/Perkaban/KepKaban dll": "Peraturan Bupati Bogor Nomor 3 Tahun 2026 Tanggal 5 Januari 2026 tentang Target Penerimaan Pajak Daerah dan Retribusi Daerah Per Triwulan Tahun Anggaran 2026",
-    Catatan: "Perbup selesai difinalisasi tanggal 4 Maret 2026, dan telah diundangkan tanggal 5 Januari 2026",
-    LINK: "https://drive.google.com/",
-  },
-  {
-    id: "2",
-    Nama: "Tim Pengembangan",
-    "Jenis Kegiatan": "Penyusunan rencana kerja pengembangan",
-    "Sub Kegiatan": "-",
-    Kasubid: "Dalam proses",
-    Kabid: "Dalam proses",
-    "Kasubid/Kabid Bidang lain": "-",
-    Sekban: "-",
-    Kaban: "-",
-    "Keterangan Tambahan": "Dokumen sedang dalam tahap reviu internal",
-    Status: "Berjalan",
-    "Tanggal Selesai": "April 2026",
-    "Perda/Perbup/Kepbup/Perkaban/KepKaban dll": "-",
-    Catatan: "Menunggu hasil reviu",
-    LINK: "",
-  },
-  {
-    id: "3",
-    Nama: "Koordinator Monitoring",
-    "Jenis Kegiatan": "Monitoring pelaksanaan program pengembangan",
-    "Sub Kegiatan": "-",
-    Kasubid: "-",
-    Kabid: "-",
-    "Kasubid/Kabid Bidang lain": "-",
-    Sekban: "-",
-    Kaban: "-",
-    "Keterangan Tambahan": "Menunggu jadwal kunjungan lapangan final",
-    Status: "Direncanakan",
-    "Tanggal Selesai": "Juni 2026",
-    "Perda/Perbup/Kepbup/Perkaban/KepKaban dll": "-",
-    Catatan: "-",
-    LINK: "",
-  },
 ];
 
 const STATUS_OPTIONS = ["Direncanakan", "Berjalan", "Selesai", "Tertunda"];
@@ -104,7 +51,7 @@ function columnsFromRows(data: MatrixRow[]) {
 
 export default function DashboardPage() {
   const [columns, setColumns] = useState(DEFAULT_COLUMNS);
-  const [rows, setRows] = useState<MatrixRow[]>(SAMPLE_ROWS);
+  const [rows, setRows] = useState<MatrixRow[]>([]);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Semua status");
   const [isDialogOpen, setDialogOpen] = useState(false);
@@ -120,10 +67,6 @@ export default function DashboardPage() {
         const response = await fetch("/api/activities");
         if (!response.ok) throw new Error("Tidak dapat mengambil data.");
         const activities = (await response.json()) as { id: string; data: Record<string, string> }[];
-        if (!activities.length) {
-          await fetch("/api/activities", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activities: SAMPLE_ROWS.map(activityPayload) }) });
-          return;
-        }
         const remoteRows = activities.map((activity) => ({ id: activity.id, ...activity.data }));
         setRows(remoteRows);
         setColumns(columnsFromRows(remoteRows));
@@ -238,11 +181,6 @@ export default function DashboardPage() {
     XLSX.writeFile(workbook, "matriks-kegiatan.xlsx");
   }
 
-  function resetData() {
-    if (!window.confirm("Kembalikan data contoh? Data yang telah diinput akan diganti.")) return;
-    void replaceRows(DEFAULT_COLUMNS, SAMPLE_ROWS, "Data contoh telah dipulihkan.");
-  }
-
   return (
     <main className="shell">
       <section className="content" id="dashboard">
@@ -260,6 +198,7 @@ export default function DashboardPage() {
             <div><h2>Data kegiatan</h2><p>{filteredRows.length} dari {rows.length} data ditampilkan</p></div>
             <div className="actions">
               <input ref={fileInput} className="sr-only" type="file" accept=".xlsx,.xls" onChange={handleImport} />
+              <button className="secondary" onClick={() => fileInput.current?.click()}>⇧ Impor Excel</button>
               <button className="secondary" onClick={exportExcel}>⇩ Ekspor</button>
             </div>
           </div>
@@ -284,20 +223,20 @@ export default function DashboardPage() {
                 {usesMatriksLayout ? <>
                   <tr className="group-header">
                     <th rowSpan={2}>No.</th><th rowSpan={2}>Nama</th>
-                    <th colSpan={2}>Jenis Kegiatan</th>
+                    <th colSpan={3}>Jenis Kegiatan</th>
                     <th colSpan={6}>Keterangan / Progress</th>
                     <th rowSpan={2}>Status</th><th rowSpan={2}>Tanggal Selesai</th>
                     <th rowSpan={2}>Perda/Perbup/Kepbup/Perkaban/KepKaban dll</th><th rowSpan={2}>Catatan</th><th rowSpan={2}>Link</th>
                     <th className="sticky-action" rowSpan={2}>Aksi</th>
                   </tr>
-                  <tr><th>Jenis Kegiatan</th><th>Sub Kegiatan</th><th>Kasubid</th><th>Kabid</th><th>Kasubid/Kabid Bidang lain</th><th>Sekban</th><th>Kaban</th><th>Keterangan Tambahan</th></tr>
+                  <tr><th>Jenis Kegiatan</th><th>Sub Kegiatan</th><th>Status Kegiatan</th><th>Kasubid</th><th>Kabid</th><th>Kasubid/Kabid Bidang lain</th><th>Sekban</th><th>Kaban</th><th>Keterangan Tambahan</th></tr>
                 </> : <tr><th>No.</th>{columns.map((column) => <th key={column}>{column}</th>)}<th className="sticky-action">Aksi</th></tr>}
               </thead>
               <tbody>
                 {filteredRows.length ? filteredRows.map((row, index) => (
                   <tr key={row.id}>
                     <td className="row-number">{index + 1}</td>
-                    {columns.map((column) => <td key={column}>{column === "Status" ? <span className={statusClass(row[column] || "-")}>{row[column] || "-"}</span> : column === "LINK" && row[column] ? <a className="link" href={row[column]} target="_blank" rel="noreferrer">Buka link</a> : row[column] || <span className="empty">—</span>}</td>)}
+                    {columns.map((column) => <td key={column}>{column === "Status" || column === "Status Kegiatan" ? <span className={statusClass(row[column] || "-")}>{row[column] || "-"}</span> : column === "LINK" && row[column] ? <a className="link" href={row[column]} target="_blank" rel="noreferrer">Buka link</a> : row[column] || <span className="empty">—</span>}</td>)}
                     <td className="sticky-action"><button className="icon-button" aria-label="Ubah data" title="Ubah" onClick={() => openEditDialog(row)}>✎</button><button className="icon-button danger" aria-label="Hapus data" title="Hapus" onClick={() => deleteRow(row.id)}>⌫</button></td>
                   </tr>
                 )) : <tr><td className="no-data" colSpan={columns.length + 2}>Tidak ada data yang sesuai. Tambahkan kegiatan atau ubah pencarian.</td></tr>}
@@ -315,7 +254,7 @@ export default function DashboardPage() {
               {columns.map((column) => (
                 <label key={column} className={column === "Keterangan" || column === "Subkegiatan" ? "wide" : ""}>
                   <span>{column}</span>
-                  {column === "Status" ? (
+                  {column === "Status" || column === "Status Kegiatan" ? (
                     <select value={draft[column] || ""} onChange={(event) => setDraft({ ...draft, [column]: event.target.value })}>
                       <option value="">Pilih status</option>{STATUS_OPTIONS.map((status) => <option key={status}>{status}</option>)}
                     </select>

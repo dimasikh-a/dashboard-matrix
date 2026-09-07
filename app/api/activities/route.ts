@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 type ActivityPayload = { id: string; data: Record<string, string> };
 
 function fromDatabase(activity: {
-  id: string; nama: string; jenisKegiatan: string; subKegiatan: string; kasubid: string; kabid: string; kasubidKabidBidangLain: string;
+  id: string; nama: string; jenisKegiatan: string; subKegiatan: string; statusKegiatan: string; kasubid: string; kabid: string; kasubidKabidBidangLain: string;
   sekban: string; kaban: string; keteranganTambahan: string; status: string; tanggalSelesai: string;
   dasarRegulasi: string; catatan: string; link: string;
 }) {
@@ -15,6 +15,7 @@ function fromDatabase(activity: {
       Nama: activity.nama,
       "Jenis Kegiatan": activity.jenisKegiatan,
       "Sub Kegiatan": activity.subKegiatan,
+      "Status Kegiatan": activity.statusKegiatan,
       Kasubid: activity.kasubid,
       Kabid: activity.kabid,
       "Kasubid/Kabid Bidang lain": activity.kasubidKabidBidangLain,
@@ -35,6 +36,7 @@ function toDatabase(data: Record<string, string>): Omit<Prisma.ActivityUnchecked
     nama: data.Nama || "",
     jenisKegiatan: data["Jenis Kegiatan"] || "",
     subKegiatan: data["Sub Kegiatan"] || "",
+    statusKegiatan: data["Status Kegiatan"] || "",
     kasubid: data.Kasubid || "",
     kabid: data.Kabid || "",
     kasubidKabidBidangLain: data["Kasubid/Kabid Bidang lain"] || "",

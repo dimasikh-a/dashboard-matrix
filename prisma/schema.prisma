@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Activity {
@@ -12,6 +13,7 @@ model Activity {
   nama                    String   @default("")
   jenisKegiatan           String   @default("") @map("jenis_kegiatan")
   subKegiatan             String   @default("") @map("sub_kegiatan")
+  statusKegiatan          String   @default("") @map("status_kegiatan")
   kasubid                 String   @default("")
   kabid                   String   @default("")
   kasubidKabidBidangLain  String   @default("") @map("kasubid_kabid_bidang_lain")
