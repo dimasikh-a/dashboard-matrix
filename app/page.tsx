@@ -236,7 +236,7 @@ export default function DashboardPage() {
                 {filteredRows.length ? filteredRows.map((row, index) => (
                   <tr key={row.id}>
                     <td className="row-number">{index + 1}</td>
-                    {columns.map((column) => <td key={column}>{column === "Status" || column === "Status Kegiatan" ? <span className={statusClass(row[column] || "-")}>{row[column] || "-"}</span> : column === "LINK" && row[column] ? <a className="link" href={row[column]} target="_blank" rel="noreferrer">Buka link</a> : row[column] || <span className="empty">—</span>}</td>)}
+                    {columns.map((column) => <td key={column}>{column === "Status" || column === "Status Kegiatan" ? <span className={statusClass(row[column] || "-")}>{row[column] || "-"}</span> : column === "Sub Kegiatan" ? (row[column]?.split("\n").filter(Boolean).length ? <ol className="point-list-view">{row[column].split("\n").filter(Boolean).map((point, i) => <li key={i}>{point}</li>)}</ol> : <span className="empty">—</span>) : column === "LINK" ? (row[column]?.split("\n").filter(Boolean).length ? <ol className="point-list-view">{row[column].split("\n").filter(Boolean).map((url, i) => <li key={i}><a className="link" href={url} target="_blank" rel="noreferrer">Buka link {row[column].split("\n").filter(Boolean).length > 1 ? i + 1 : ""}</a></li>)}</ol> : <span className="empty">—</span>) : row[column] || <span className="empty">—</span>}</td>)}
                     <td className="sticky-action"><button className="icon-button" aria-label="Ubah data" title="Ubah" onClick={() => openEditDialog(row)}>✎</button><button className="icon-button danger" aria-label="Hapus data" title="Hapus" onClick={() => deleteRow(row.id)}>⌫</button></td>
                   </tr>
                 )) : <tr><td className="no-data" colSpan={columns.length + 2}>Tidak ada data yang sesuai. Tambahkan kegiatan atau ubah pencarian.</td></tr>}
@@ -258,7 +258,29 @@ export default function DashboardPage() {
                     <select value={draft[column] || ""} onChange={(event) => setDraft({ ...draft, [column]: event.target.value })}>
                       <option value="">Pilih status</option>{STATUS_OPTIONS.map((status) => <option key={status}>{status}</option>)}
                     </select>
-                  ) : ["Jenis Kegiatan", "Sub Kegiatan", "Keterangan Tambahan", "Perda/Perbup/Kepbup/Perkaban/KepKaban dll", "Catatan"].includes(column) ? (
+                  ) : column === "Sub Kegiatan" || column === "LINK" ? (
+                    <div className="point-list">
+                      {(draft[column] ? draft[column].split("\n") : [""]).map((point, index, points) => (
+                        <div className="point-row" key={index}>
+                          <span className="point-index">{index + 1}.</span>
+                          <input
+                            type={column === "LINK" ? "url" : "text"}
+                            value={point}
+                            onChange={(event) => {
+                              const next = [...points];
+                              next[index] = event.target.value;
+                              setDraft({ ...draft, [column]: next.join("\n") });
+                            }}
+                            placeholder={column === "LINK" ? `Link ${index + 1} (https://...)` : `Poin sub kegiatan ${index + 1}`}
+                          />
+                          {points.length > 1 && (
+                            <button type="button" className="icon-button danger" title="Hapus poin" onClick={() => setDraft({ ...draft, [column]: points.filter((_, i) => i !== index).join("\n") })}>⌫</button>
+                          )}
+                        </div>
+                      ))}
+                      <button type="button" className="text-button" onClick={() => setDraft({ ...draft, [column]: [...(draft[column] ? draft[column].split("\n") : [""]), ""].join("\n") })}>+ Tambah {column === "LINK" ? "link" : "poin"}</button>
+                    </div>
+                  ) : ["Jenis Kegiatan", "Keterangan Tambahan", "Perda/Perbup/Kepbup/Perkaban/KepKaban dll", "Catatan"].includes(column) ? (
                     <textarea value={draft[column] || ""} onChange={(event) => setDraft({ ...draft, [column]: event.target.value })} placeholder={`Masukkan ${column.toLowerCase()}`} />
                   ) : (
                     <input value={draft[column] || ""} onChange={(event) => setDraft({ ...draft, [column]: event.target.value })} placeholder={`Masukkan ${column.toLowerCase()}`} />
