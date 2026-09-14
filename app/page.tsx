@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 
 type MatrixRow = Record<string, string> & { id: string };
@@ -8,15 +8,15 @@ type MatrixRow = Record<string, string> & { id: string };
 const DEFAULT_COLUMNS = [
   "Nama",
   "Jenis Kegiatan",
-  "Sub Kegiatan",
   "Status Kegiatan",
+  "Sub Kegiatan",
+  "Status",
   "Kasubid",
   "Kabid",
   "Kasubid/Kabid Bidang lain",
   "Sekban",
   "Kaban",
   "Keterangan Tambahan",
-  "Status",
   "Tanggal Selesai",
   "Perda/Perbup/Kepbup/Perkaban/KepKaban dll",
   "Catatan",
@@ -35,16 +35,13 @@ function createEmptyRow(columns: string[]): MatrixRow {
   });
 }
 
-function detectHeaderRow(rows: unknown[][]) {
-  return rows.findIndex((row) => row.filter((cell) => String(cell ?? "").trim()).length >= 3);
-}
-
 function activityPayload(row: MatrixRow) {
   const { id, ...data } = row;
   return { id, data };
 }
 
 function columnsFromRows(data: MatrixRow[]) {
+  if (!data.length) return DEFAULT_COLUMNS;
   const available = new Set(data.flatMap((row) => Object.keys(row).filter((key) => key !== "id")));
   return [...DEFAULT_COLUMNS.filter((column) => available.has(column)), ...Array.from(available).filter((column) => !DEFAULT_COLUMNS.includes(column))];
 }
@@ -59,7 +56,6 @@ export default function DashboardPage() {
   const [draft, setDraft] = useState<MatrixRow>(() => createEmptyRow(DEFAULT_COLUMNS));
   const [notice, setNotice] = useState("");
   const [nameSort, setNameSort] = useState<"asc" | "desc">("asc");
-  const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadActivities() {
@@ -143,42 +139,11 @@ export default function DashboardPage() {
     }
   }
 
-  function handleImport(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (loadEvent) => {
-      const workbook = XLSX.read(loadEvent.target?.result, { type: "array" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const values = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: "" });
-      const headerIndex = detectHeaderRow(values);
-      if (headerIndex < 0) {
-        setNotice("Header tabel tidak ditemukan. Pastikan ada minimal tiga kolom pada Excel.");
-        return;
-      }
-      const importedColumns = values[headerIndex]
-        .map((value, index) => String(value).trim() || `Kolom ${index + 1}`)
-        .filter((value, index, array) => value && array.indexOf(value) === index);
-      const importedRows = values
-        .slice(headerIndex + 1)
-        .filter((row) => row.some((value) => String(value).trim()))
-        .map((row) =>
-          importedColumns.reduce<MatrixRow>((record, column, index) => ({
-            ...record,
-            [column]: String(row[index] ?? ""),
-          }), { id: crypto.randomUUID() }),
-        );
-      await replaceRows(importedColumns, importedRows, `${importedRows.length} baris dari Excel berhasil diimpor.`);
-    };
-    reader.readAsArrayBuffer(file);
-    event.target.value = "";
-  }
-
-  function exportExcel() {
+  function exportExcel(filename = "matriks-kegiatan.xlsx") {
     const worksheet = XLSX.utils.json_to_sheet(rows.map(({ id, ...row }) => row), { header: columns });
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Matriks Kegiatan");
-    XLSX.writeFile(workbook, "matriks-kegiatan.xlsx");
+    XLSX.writeFile(workbook, filename);
   }
 
   return (
@@ -186,9 +151,9 @@ export default function DashboardPage() {
       <section className="content" id="dashboard">
         <header className="topbar">
           <div>
-            <p className="eyebrow">MANAJEMEN PROGRAM</p>
+            <p className="eyebrow">Bidang Perencanaan dan Pengembangan BAPPENDA</p>
             <h1>Matriks Pelaksanaan Kegiatan</h1>
-            <p className="subtitle">Kelola rencana, pelaksanaan, dan tindak lanjut kegiatan dalam satu tempat.</p>
+            <p className="subtitle">Subid Pengembangan Pada Bidang Perencanaan Dan Pengembangan</p>
           </div>
           <button className="primary" onClick={openNewDialog}>+ Tambah kegiatan</button>
         </header>
@@ -196,11 +161,6 @@ export default function DashboardPage() {
         <section className="table-card" id="data-kegiatan">
           <div className="table-header">
             <div><h2>Data kegiatan</h2><p>{filteredRows.length} dari {rows.length} data ditampilkan</p></div>
-            <div className="actions">
-              <input ref={fileInput} className="sr-only" type="file" accept=".xlsx,.xls" onChange={handleImport} />
-              <button className="secondary" onClick={() => fileInput.current?.click()}>⇧ Impor Excel</button>
-              <button className="secondary" onClick={exportExcel}>⇩ Ekspor</button>
-            </div>
           </div>
 
           {notice && <div className="notice" role="status">{notice}<button onClick={() => setNotice("")}>×</button></div>}
@@ -223,13 +183,13 @@ export default function DashboardPage() {
                 {usesMatriksLayout ? <>
                   <tr className="group-header">
                     <th rowSpan={2}>No.</th><th rowSpan={2}>Nama</th>
-                    <th colSpan={3}>Jenis Kegiatan</th>
+                    <th colSpan={4}>Jenis Kegiatan</th>
                     <th colSpan={6}>Keterangan / Progress</th>
-                    <th rowSpan={2}>Status</th><th rowSpan={2}>Tanggal Selesai</th>
+                    <th rowSpan={2}>Tanggal Selesai</th>
                     <th rowSpan={2}>Perda/Perbup/Kepbup/Perkaban/KepKaban dll</th><th rowSpan={2}>Catatan</th><th rowSpan={2}>Link</th>
                     <th className="sticky-action" rowSpan={2}>Aksi</th>
                   </tr>
-                  <tr><th>Jenis Kegiatan</th><th>Sub Kegiatan</th><th>Status Kegiatan</th><th>Kasubid</th><th>Kabid</th><th>Kasubid/Kabid Bidang lain</th><th>Sekban</th><th>Kaban</th><th>Keterangan Tambahan</th></tr>
+                  <tr><th>Jenis Kegiatan</th><th>Sub Kegiatan</th><th>Status Kegiatan</th><th>Status</th><th>Kasubid</th><th>Kabid</th><th>Kasubid/Kabid Bidang lain</th><th>Sekban</th><th>Kaban</th><th>Keterangan Tambahan</th></tr>
                 </> : <tr><th>No.</th>{columns.map((column) => <th key={column}>{column}</th>)}<th className="sticky-action">Aksi</th></tr>}
               </thead>
               <tbody>
