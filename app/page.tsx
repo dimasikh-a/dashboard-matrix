@@ -8,9 +8,9 @@ type MatrixRow = Record<string, string> & { id: string };
 const DEFAULT_COLUMNS = [
   "Nama",
   "Jenis Kegiatan",
-  "Status Kegiatan",
-  "Sub Kegiatan",
   "Status",
+  "Sub Kegiatan",
+  "Status Kegiatan",
   "Kasubid",
   "Kabid",
   "Kasubid/Kabid Bidang lain",
