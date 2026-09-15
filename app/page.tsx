@@ -56,7 +56,6 @@ export default function DashboardPage() {
   const [editingRow, setEditingRow] = useState<MatrixRow | null>(null);
   const [draft, setDraft] = useState<MatrixRow>(() => createEmptyRow(DEFAULT_COLUMNS));
   const [notice, setNotice] = useState("");
-  const [nameSort, setNameSort] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     async function loadActivities() {
@@ -81,8 +80,13 @@ export default function DashboardPage() {
       const matchesStatus = statusFilter === "Semua status" || row.Status === statusFilter;
       const matchesName = !nameFilter || row.Nama === nameFilter;
       return matchesQuery && matchesStatus && matchesName;
-    }).sort((left, right) => (left.Nama || "").localeCompare(right.Nama || "", "id", { sensitivity: "base" }) * (nameSort === "asc" ? 1 : -1));
-  }, [columns, nameFilter, nameSort, query, rows, statusFilter]);
+    }).sort((left, right) => (left.Nama || "").localeCompare(right.Nama || "", "id", { sensitivity: "base" }));
+  }, [columns, nameFilter, query, rows, statusFilter]);
+
+  const uniqueNames = useMemo(
+    () => Array.from(new Set(rows.map((row) => row.Nama).filter((name): name is string => Boolean(name)))).sort((a, b) => a.localeCompare(b, "id", { sensitivity: "base" })),
+    [rows],
+  );
 
   const usesMatriksLayout = columns.length === DEFAULT_COLUMNS.length && DEFAULT_COLUMNS.every((column, index) => columns[index] === column);
 
@@ -173,9 +177,9 @@ export default function DashboardPage() {
               <option>Semua status</option>
               {STATUS_OPTIONS.map((status) => <option key={status}>{status}</option>)}
             </select>
-            <select value={nameSort} onChange={(event) => setNameSort(event.target.value as "asc" | "desc")} aria-label="Urutkan berdasarkan nama">
-              <option value="asc">Nama: A–Z</option>
-              <option value="desc">Nama: Z–A</option>
+            <select value={nameFilter ?? ""} onChange={(event) => setNameFilter(event.target.value || null)} aria-label="Filter berdasarkan nama">
+              <option value="">Semua nama</option>
+              {uniqueNames.map((name) => <option key={name} value={name}>{name}</option>)}
             </select>
           </div>
 
