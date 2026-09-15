@@ -51,6 +51,7 @@ export default function DashboardPage() {
   const [rows, setRows] = useState<MatrixRow[]>([]);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Semua status");
+  const [nameFilter, setNameFilter] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<MatrixRow | null>(null);
   const [draft, setDraft] = useState<MatrixRow>(() => createEmptyRow(DEFAULT_COLUMNS));
@@ -78,9 +79,10 @@ export default function DashboardPage() {
     return rows.filter((row) => {
       const matchesQuery = !normalizedQuery || columns.some((column) => row[column]?.toLowerCase().includes(normalizedQuery));
       const matchesStatus = statusFilter === "Semua status" || row.Status === statusFilter;
-      return matchesQuery && matchesStatus;
+      const matchesName = !nameFilter || row.Nama === nameFilter;
+      return matchesQuery && matchesStatus && matchesName;
     }).sort((left, right) => (left.Nama || "").localeCompare(right.Nama || "", "id", { sensitivity: "base" }) * (nameSort === "asc" ? 1 : -1));
-  }, [columns, nameSort, query, rows, statusFilter]);
+  }, [columns, nameFilter, nameSort, query, rows, statusFilter]);
 
   const usesMatriksLayout = columns.length === DEFAULT_COLUMNS.length && DEFAULT_COLUMNS.every((column, index) => columns[index] === column);
 
@@ -151,9 +153,9 @@ export default function DashboardPage() {
       <section className="content" id="dashboard">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Bidang Perencanaan dan Pengembangan BAPPENDA</p>
+            <p className="eyebrow">MANAJEMEN PROGRAM</p>
             <h1>Matriks Pelaksanaan Kegiatan</h1>
-            <p className="subtitle">Subid Pengembangan Pada Bidang Perencanaan Dan Pengembangan</p>
+            <p className="subtitle">Kelola rencana, pelaksanaan, dan tindak lanjut kegiatan dalam satu tempat.</p>
           </div>
           <button className="primary" onClick={openNewDialog}>+ Tambah kegiatan</button>
         </header>
@@ -177,6 +179,13 @@ export default function DashboardPage() {
             </select>
           </div>
 
+          {nameFilter && (
+            <div className="notice" role="status">
+              Menampilkan kegiatan milik <strong>{nameFilter}</strong> saja
+              <button onClick={() => setNameFilter(null)}>×</button>
+            </div>
+          )}
+
           <div className="table-scroll">
             <table>
               <thead>
@@ -189,7 +198,7 @@ export default function DashboardPage() {
                     <th rowSpan={2}>Perda/Perbup/Kepbup/Perkaban/KepKaban dll</th><th rowSpan={2}>Catatan</th><th rowSpan={2}>Link</th>
                     <th className="sticky-action" rowSpan={2}>Aksi</th>
                   </tr>
-                  <tr><th>Jenis Kegiatan</th><th>Sub Kegiatan</th><th>Status Kegiatan</th><th>Status</th><th>Kasubid</th><th>Kabid</th><th>Kasubid/Kabid Bidang lain</th><th>Sekban</th><th>Kaban</th><th>Keterangan Tambahan</th></tr>
+                  <tr><th>Jenis Kegiatan</th><th>Status</th><th>Sub Kegiatan</th><th>Status Kegiatan</th><th>Kasubid</th><th>Kabid</th><th>Kasubid/Kabid Bidang lain</th><th>Sekban</th><th>Kaban</th><th>Keterangan Tambahan</th></tr>
                 </> : <tr><th>No.</th>{columns.map((column) => <th key={column}>{column}</th>)}<th className="sticky-action">Aksi</th></tr>}
               </thead>
               <tbody>
